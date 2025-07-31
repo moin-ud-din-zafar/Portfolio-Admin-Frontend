@@ -1,12 +1,11 @@
 // src/components/BlogForm.jsx
 import { useState, useEffect } from 'react'
-import API from '../api/api'
+import API from '../api/api'             // baseURL → https://…/api
 import { useNavigate, useParams } from 'react-router-dom'
 
 export function BlogForm() {
-  const { id } = useParams()    // if editing
+  const { id } = useParams()            // present if editing
   const navigate = useNavigate()
-
   const [form, setForm] = useState({
     title: '',
     excerpt: '',
@@ -16,10 +15,10 @@ export function BlogForm() {
     file: null,
   })
 
-  // Load existing blog when editing
+  // If editing, fetch the blog
   useEffect(() => {
     if (!id) return
-    API.get(`/blogs/${id}`)
+    API.get(`/blogs/${id}`)              // ← GET /api/blogs/:id
       .then(res => {
         const b = res.data
         setForm({
@@ -37,7 +36,7 @@ export function BlogForm() {
   const handleSubmit = async e => {
     e.preventDefault()
 
-    // Build the FormData for create or update-with-image
+    // Build FormData for create or update-with-image
     const data = new FormData()
     data.append('title', form.title)
     data.append('excerpt', form.excerpt)
@@ -48,8 +47,9 @@ export function BlogForm() {
 
     try {
       if (id) {
-        // EDIT: if no new image chosen, send JSON, else send multipart
+        // EDIT
         if (!form.file) {
+          // no new file → JSON PUT
           await API.put(`/blogs/${id}`, {
             title: form.title,
             excerpt: form.excerpt,
@@ -58,11 +58,12 @@ export function BlogForm() {
             tags: form.tags,
           })
         } else {
+          // with new file → multipart PUT
           await API.put(`/blogs/${id}`, data)
         }
       } else {
-        // CREATE new post
-        await API.post('/blogs', data)
+        // CREATE
+        await API.post(`/blogs`, data)     // ← POST /api/blogs
       }
       navigate('/blogs')
     } catch (err) {
