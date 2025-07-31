@@ -22,6 +22,11 @@ API.interceptors.request.use(config => {
     config.url = config.url.replace('/projectroutes', '/projects');
   }
 
+  // messageroutes → messages
+  if (config.url.includes('/messageroutes')) {
+    config.url = config.url.replace('/messageroutes', '/messages');
+  }
+
   return config;
 }, error => Promise.reject(error));
 
