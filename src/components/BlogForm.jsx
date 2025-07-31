@@ -1,85 +1,88 @@
-import { useState, useEffect } from 'react';
-import API from '../api/api';
-import { useNavigate, useParams } from 'react-router-dom';
+// src/components/BlogForm.jsx
+import { useState, useEffect } from 'react'
+import API from '../api/api'
+import { useNavigate, useParams } from 'react-router-dom'
 
 export function BlogForm() {
-  const { id } = useParams();           // if editing
-  const navigate = useNavigate();
+  const { id } = useParams()    // if editing
+  const navigate = useNavigate()
 
   const [form, setForm] = useState({
-    title: '', excerpt: '', content: '',
-    tags: [], publishDate: '', file: null,
-  });
+    title: '',
+    excerpt: '',
+    content: '',
+    tags: [],
+    publishDate: '',
+    file: null,
+  })
 
-  // load existing
+  // Load existing blog when editing
   useEffect(() => {
-    if (!id) return;
-    API.get(`/blogroutes/${id}`)
+    if (!id) return
+    API.get(`/blogs/${id}`)
       .then(res => {
-        const b = res.data;
+        const b = res.data
         setForm({
           title: b.title,
           excerpt: b.excerpt,
           content: b.content,
           tags: b.tags,
-          publishDate: b.publishDate.slice(0,10),
+          publishDate: b.publishDate.slice(0, 10),
           file: null,
-        });
+        })
       })
-      .catch(console.error);
-  }, [id]);
+      .catch(console.error)
+  }, [id])
 
   const handleSubmit = async e => {
-    e.preventDefault();
+    e.preventDefault()
 
-    const data = new FormData();
-    data.append('title', form.title);
-    data.append('excerpt', form.excerpt);
-    data.append('content', form.content);
-    data.append('publishDate', form.publishDate);
-    data.append('tags', JSON.stringify(form.tags));
-    if (form.file) data.append('file', form.file);
+    // Build the FormData for create or update-with-image
+    const data = new FormData()
+    data.append('title', form.title)
+    data.append('excerpt', form.excerpt)
+    data.append('content', form.content)
+    data.append('publishDate', form.publishDate)
+    data.append('tags', JSON.stringify(form.tags))
+    if (form.file) data.append('file', form.file)
 
     try {
       if (id) {
-        // if editing: use PUT without file if none selected
+        // EDIT: if no new image chosen, send JSON, else send multipart
         if (!form.file) {
-          // just JSON
-          await API.put(`/blogroutes/${id}`, {
+          await API.put(`/blogs/${id}`, {
             title: form.title,
             excerpt: form.excerpt,
             content: form.content,
             publishDate: form.publishDate,
             tags: form.tags,
-          });
+          })
         } else {
-          await API.put(
-            `/blogroutes/${id}`,
-            data,
-            { headers: { 'Content-Type': 'multipart/form-data' } }
-          );
+          await API.put(`/blogs/${id}`, data)
         }
       } else {
-        // create new
-        await API.post(
-          '/blogroutes',
-          data,
-          { headers: { 'Content-Type': 'multipart/form-data' } }
-        );
+        // CREATE new post
+        await API.post('/blogs', data)
       }
-      navigate('/blogs');
+      navigate('/blogs')
     } catch (err) {
-      console.error(err);
-      alert('Save failed');
+      console.error(err.response?.data || err)
+      alert(
+        'Save failed: ' +
+          (err.response?.data?.error ||
+            (err.response?.data?.details?.join(', ')) ||
+            err.message)
+      )
     }
-  };
+  }
 
   return (
     <form onSubmit={handleSubmit} className="space-y-4 p-4 max-w-lg mx-auto">
       <h2 className="text-2xl font-bold">{id ? 'Edit' : 'New'} Blog</h2>
 
       <input
-        type="text" required
+        type="text"
+        required
         placeholder="Title"
         value={form.title}
         onChange={e => setForm(f => ({ ...f, title: e.target.value }))}
@@ -87,7 +90,8 @@ export function BlogForm() {
       />
 
       <input
-        type="text" required
+        type="text"
+        required
         placeholder="Excerpt"
         value={form.excerpt}
         onChange={e => setForm(f => ({ ...f, excerpt: e.target.value }))}
@@ -103,7 +107,8 @@ export function BlogForm() {
       />
 
       <input
-        type="date" required
+        type="date"
+        required
         value={form.publishDate}
         onChange={e => setForm(f => ({ ...f, publishDate: e.target.value }))}
         className="border px-3 py-2 rounded"
@@ -113,32 +118,32 @@ export function BlogForm() {
         type="text"
         placeholder="Tags (comma-separated)"
         value={form.tags.join(', ')}
-        onChange={e => setForm(f => ({
-          ...f,
-          tags: e.target.value
-                   .split(',')
-                   .map(t => t.trim())
-                   .filter(Boolean)
-        }))}
+        onChange={e =>
+          setForm(f => ({
+            ...f,
+            tags: e.target.value
+              .split(',')
+              .map(t => t.trim())
+              .filter(Boolean),
+          }))
+        }
         className="w-full border px-3 py-2 rounded"
       />
 
       <div>
         <label className="block mb-1">Featured Image</label>
         <input
-          type="file" accept="image/*"
+          type="file"
+          accept="image/*"
           onChange={e => setForm(f => ({ ...f, file: e.target.files[0] }))}
         />
       </div>
 
-      <button
-        type="submit"
-        className="bg-blue-600 text-white px-6 py-2 rounded"
-      >
+      <button type="submit" className="bg-blue-600 text-white px-6 py-2 rounded">
         {id ? 'Update' : 'Create'}
       </button>
     </form>
-  );
+  )
 }
 
-export default BlogForm;
+export default BlogForm
