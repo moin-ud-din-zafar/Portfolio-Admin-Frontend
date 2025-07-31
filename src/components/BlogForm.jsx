@@ -18,7 +18,7 @@ export function BlogForm() {
   // If editing, fetch the blog
   useEffect(() => {
     if (!id) return
-    API.get(`/blogs/${id}`)              // ← GET /api/blogs/:id
+    API.get(`/blogs/${id}`)
       .then(res => {
         const b = res.data
         setForm({
@@ -36,35 +36,30 @@ export function BlogForm() {
   const handleSubmit = async e => {
     e.preventDefault()
 
-    // Build FormData for create or update-with-image
+    // Build FormData for both create & update
     const data = new FormData()
-    data.append('title', form.title)
-    data.append('excerpt', form.excerpt)
-    data.append('content', form.content)
+    data.append('title',       form.title)
+    data.append('excerpt',     form.excerpt)
+    data.append('content',     form.content)
     data.append('publishDate', form.publishDate)
-    data.append('tags', JSON.stringify(form.tags))
-    if (form.file) data.append('file', form.file)
+    data.append('tags',        JSON.stringify(form.tags))
+    if (form.file) {
+      data.append('file', form.file)
+    }
 
     try {
+      const config = {
+        headers: { 'Content-Type': 'multipart/form-data' }
+      }
+
       if (id) {
         // EDIT
-        if (!form.file) {
-          // no new file → JSON PUT
-          await API.put(`/blogs/${id}`, {
-            title: form.title,
-            excerpt: form.excerpt,
-            content: form.content,
-            publishDate: form.publishDate,
-            tags: form.tags,
-          })
-        } else {
-          // with new file → multipart PUT
-          await API.put(`/blogs/${id}`, data)
-        }
+        await API.put(`/blogs/${id}`, data, config)
       } else {
         // CREATE
-        await API.post(`/blogs`, data)     // ← POST /api/blogs
+        await API.post(`/blogs`, data, config)
       }
+
       navigate('/blogs')
     } catch (err) {
       console.error(err.response?.data || err)
