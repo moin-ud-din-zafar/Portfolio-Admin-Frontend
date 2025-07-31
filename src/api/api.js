@@ -8,11 +8,20 @@ const baseURL =
 
 const API = axios.create({ baseURL });
 
-// Intercept any request URL containing "blogroutes" and rewrite it to "blogs"
+// Rewrite legacy route segments before each request
 API.interceptors.request.use(config => {
-  if (config.url && config.url.includes('/blogroutes')) {
+  if (!config.url) return config;
+
+  // blogroutes → blogs
+  if (config.url.includes('/blogroutes')) {
     config.url = config.url.replace('/blogroutes', '/blogs');
   }
+
+  // projectroutes → projects
+  if (config.url.includes('/projectroutes')) {
+    config.url = config.url.replace('/projectroutes', '/projects');
+  }
+
   return config;
 }, error => Promise.reject(error));
 
