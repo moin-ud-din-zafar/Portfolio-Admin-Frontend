@@ -8,7 +8,6 @@ export default function ProjectForm() {
   const { id }      = useParams();
   const navigate    = useNavigate();
 
-  // include `image` (URL) + `file`
   const empty = {
     title: '', description: '',
     tags: [], demoUrl: '', codeUrl: '',
@@ -20,11 +19,11 @@ export default function ProjectForm() {
 
   const [form, setForm] = useState(empty);
 
-  // Load all projects and find the one with `id`
+  // Load the single project when editing
   useEffect(() => {
     if (!id) return;
 
-    API.get('/projectroutes')
+    API.get('/projects')               // ← changed from /projectroutes
       .then(res => {
         const proj = res.data.find(p => p._id === id);
         if (!proj) throw new Error('Project not found');
@@ -36,7 +35,7 @@ export default function ProjectForm() {
           codeUrl:     proj.codeUrl,
           featured:    proj.featured,
           stats:       proj.stats,
-          image:       proj.image,  // show existing
+          image:       proj.image,
           file:        null,
         });
       })
@@ -51,7 +50,6 @@ export default function ProjectForm() {
 
     if (id) {
       // === UPDATE ===
-      // Backend update only accepts JSON (it doesn't run multer on PUT)
       const payload = {
         title:       form.title,
         description: form.description,
@@ -60,11 +58,11 @@ export default function ProjectForm() {
         codeUrl:     form.codeUrl,
         featured:    form.featured,
         stats:       form.stats,
-        // note: image updates via PUT won't work unless you add multer middleware
+        // image updates would require adding file-upload middleware on PUT
       };
 
       try {
-        await API.put(`/projectroutes/${id}`, payload);
+        await API.put(`/projects/${id}`, payload);  // ← changed endpoint
         navigate('/projects');
       } catch (err) {
         console.error(err);
@@ -73,7 +71,6 @@ export default function ProjectForm() {
 
     } else {
       // === CREATE ===
-      // use FormData so multer can handle `image`
       const data = new FormData();
       data.append('title',       form.title);
       data.append('description', form.description);
@@ -85,7 +82,7 @@ export default function ProjectForm() {
       if (form.file) data.append('image', form.file);
 
       try {
-        await API.post('/projectroutes', data, {
+        await API.post('/projects', data, {           // ← changed endpoint
           headers: { 'Content-Type': 'multipart/form-data' }
         });
         navigate('/projects');
@@ -118,7 +115,7 @@ export default function ProjectForm() {
 
       <input
         type="text"
-        placeholder="Tags (comma‑separated)"
+        placeholder="Tags (comma-separated)"
         value={form.tags.join(', ')}
         onChange={e => setForm(f => ({
           ...f,
@@ -179,7 +176,6 @@ export default function ProjectForm() {
           {id ? 'Change Image (create-only)' : 'Image'}
         </label>
 
-        {/* Show existing image when editing */}
         {id && form.image && !form.file && (
           <img
             src={form.image}
@@ -188,11 +184,10 @@ export default function ProjectForm() {
           />
         )}
 
-        {/* File input only really used on create */}
         <input
           type="file"
           accept="image/*"
-          disabled={!!id}  // optional: disable on edit since update endpoint won't handle it
+          disabled={!!id}
           onChange={e => setForm(f => ({ ...f, file: e.target.files[0] }))}
           className="border px-3 py-2 rounded"
         />
