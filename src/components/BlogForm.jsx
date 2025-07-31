@@ -12,7 +12,7 @@ export function BlogForm() {
     content: '',
     tags: [],
     publishDate: '',
-    file: null,
+    image: null,
   })
 
   // If editing, fetch the blog
@@ -22,12 +22,12 @@ export function BlogForm() {
       .then(res => {
         const b = res.data
         setForm({
-          title: b.title,
-          excerpt: b.excerpt,
-          content: b.content,
-          tags: b.tags,
+          title:       b.title,
+          excerpt:     b.excerpt,
+          content:     b.content,
+          tags:        b.tags,
           publishDate: b.publishDate.slice(0, 10),
-          file: null,
+          image:       null,
         })
       })
       .catch(console.error)
@@ -36,30 +36,25 @@ export function BlogForm() {
   const handleSubmit = async e => {
     e.preventDefault()
 
-    // Build FormData for both create & update
+    // Build FormData
     const data = new FormData()
     data.append('title',       form.title)
     data.append('excerpt',     form.excerpt)
     data.append('content',     form.content)
     data.append('publishDate', form.publishDate)
     data.append('tags',        JSON.stringify(form.tags))
-    if (form.file) {
-      data.append('file', form.file)
+    if (form.image) {
+      data.append('image', form.image)
     }
 
     try {
-      const config = {
-        headers: { 'Content-Type': 'multipart/form-data' }
-      }
-
       if (id) {
         // EDIT
-        await API.put(`/blogs/${id}`, data, config)
+        await API.put(`/blogs/${id}`, data)
       } else {
         // CREATE
-        await API.post(`/blogs`, data, config)
+        await API.post(`/blogs`, data)
       }
-
       navigate('/blogs')
     } catch (err) {
       console.error(err.response?.data || err)
@@ -131,7 +126,7 @@ export function BlogForm() {
         <input
           type="file"
           accept="image/*"
-          onChange={e => setForm(f => ({ ...f, file: e.target.files[0] }))}
+          onChange={e => setForm(f => ({ ...f, image: e.target.files[0] }))}
         />
       </div>
 
