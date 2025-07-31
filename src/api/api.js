@@ -1,3 +1,4 @@
+// src/api/api.js
 import axios from 'axios';
 
 const baseURL =
@@ -6,5 +7,13 @@ const baseURL =
   'https://portfolio-admin-backend-alpha-6rwz3wcuy.vercel.app/api';
 
 const API = axios.create({ baseURL });
+
+// Intercept any request URL containing "blogroutes" and rewrite it to "blogs"
+API.interceptors.request.use(config => {
+  if (config.url && config.url.includes('/blogroutes')) {
+    config.url = config.url.replace('/blogroutes', '/blogs');
+  }
+  return config;
+}, error => Promise.reject(error));
 
 export default API;
